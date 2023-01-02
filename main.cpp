@@ -2,6 +2,7 @@
 	Cho số thành phố ra ngoài
 	Khởi tạo mảng động mặc định ngay từ đầu
 	Đọc file data
+	Mặc định xe xuất phát từ 0
 */
 
 #include <bits/stdc++.h>
@@ -11,7 +12,8 @@ using namespace std;
 
 #define MAX 1000
 
-int n;
+// Số thành phố
+int N;
 
 // Ma trận khoảng cách giữa các thành phố
 int **graph;
@@ -46,15 +48,15 @@ void readFile() {
 
 	ifstream f;
 	f.open("test.txt");
-	f >> n;
+	f >> N;
 
-	graph = new int *[n];
-	for(int i = 0; i < n; i++) {
-		graph[i] = new int [n];
+	graph = new int *[N];
+	for(int i = 0; i < N; i++) {
+		graph[i] = new int [N];
 	}
 
-	for(int i = 0; i < n; i++) {
-		for(int j = 0; j < n; j++) {
+	for(int i = 0; i < N; i++) {
+		for(int j = 0; j < N; j++) {
 			f >> graph[i][j];
 		}
 	}
@@ -67,15 +69,15 @@ void readFile() {
 		graph: Ma trận khoảng cách giữa các thành phố
 		n: Số thành phố
 */
-int fitness(int *sol, int **graph, int n) {
+int fitness(int *sol) {
 
 	int path = 0; // độ dài quãng đường
 
-	for (int i = 0; i < n - 1; i++) {
+	for (int i = 0; i < N - 1; i++) {
 		path = path + graph[sol[i]][sol[i + 1]];
 	}
 
-	path += graph[sol[n - 1]][0]; // quay lại thành phố đầu
+	path += graph[sol[N - 1]][0]; // quay lại thành phố đầu
 	return path;
 }
 
@@ -85,7 +87,7 @@ int fitness(int *sol, int **graph, int n) {
 		graph: Ma trận khoảng cách giữa các thành phố
 		n: Số thành phố
 */
-int *first_sol(int **graph, int n) {
+int *first_sol() {
 
 	srand((int)time(0));
 	int r;
@@ -96,9 +98,9 @@ int *first_sol(int **graph, int n) {
 	tmp[0] = 0;
 
 	// Random thành phố (?)
-	for (int i = 1; i < n; i++) {
+	for (int i = 1; i < N; i++) {
 		do {
-			r = 1 + rand() % ((n - 1) + 1 - 1);
+			r = 1 + rand() % ((N - 1) + 1 - 1);
 		} while (vis.find(r) != vis.end());
 		vis[r] = true;
 		tmp[i] = r;
@@ -112,33 +114,33 @@ int *first_sol(int **graph, int n) {
 		graph: Ma trận khoảng cách giữa các thành phố
 		n: Số thành phố
 */
-void test(int **graph, int n) {
+void tabuSearch() {
 
-	int tabu_list[n]; // Tabu list
-	memset(tabu_list, n, 0);
+	int tabu_list[N]; // Tabu list
+	memset(tabu_list, N, 0);
 
-	sol = first_sol(graph, n); // Khởi tạo solution đầu tiên
+	sol = first_sol(); // Khởi tạo solution đầu tiên
 
-	int best_val = fitness(sol, graph, n); // Value cho solution tốt nhất
+	int best_val = fitness(sol); // Value cho solution tốt nhất
 	cout << "////////GIA TRI KHOI TAO/////////" << endl;
 	cout << best_val << endl;
-	for(int i = 0; i < n; i++) {
+	for(int i = 0; i < N; i++) {
 		cout << sol[i] << " ";
 	}
 	cout << endl << "/////////////////" << endl;
 
 	int *best_sol = new int [MAX]; // Solution tốt nhất
-	for (int i = 0; i < n; i++) best_sol[i] = sol[i];
+	for (int i = 0; i < N; i++) best_sol[i] = sol[i];
 
 	int *best_candidate = new int [MAX]; // Trường hợp tốt nhất từ vòng lặp trước
-	for (int i = 0; i < n; i++) best_candidate[i] = sol[i];
+	for (int i = 0; i < N; i++) best_candidate[i] = sol[i];
 
 	int *neighbor_candidate = new int [MAX]; // Miền láng giềng tốt nhất đang xét 
-	for (int i = 0; i < n; i++) neighbor_candidate[i] = sol[i];
+	for (int i = 0; i < N; i++) neighbor_candidate[i] = sol[i];
 
 	bool stop = false; // Điều kiện dừng
 
-	int t = (int)sqrt(n); // Tabu tenure
+	int t = (int)sqrt(N); // Tabu tenure
 
 	int best_keepping = 0; // Số lần không thay đổi best solution
 
@@ -149,13 +151,13 @@ void test(int **graph, int n) {
 		int city1, city2;
 		int cmp = INT_MAX;
 
-		for(int i = 1; i < n; i++) {
-			for(int j = 1; j < n; j++) {
+		for(int i = 1; i < N; i++) {
+			for(int j = 1; j < N; j++) {
 
 				if(i == j) continue;
 
 				int* tmp_sol = new int [MAX]; // Solution hiện tại đang xét đến 
-				for(int i = 0; i < n; i++) {
+				for(int i = 0; i < N; i++) {
 					tmp_sol[i] = best_candidate[i];
 				}
 
@@ -165,11 +167,11 @@ void test(int **graph, int n) {
 				if(tabu_list[i] == 0 && tabu_list[j] == 0) {
 					
 					// Nếu không tabu thì xét xem đây có phải phương án tốt nhất trong láng giềng
-					if(fitness(tmp_sol, graph, n) < cmp) {
+					if(fitness(tmp_sol) < cmp) {
 
 						// Cập nhật giá trị 
-						for (int i = 0; i < n; i++) neighbor_candidate[i] = tmp_sol[i];
-						cmp = fitness(neighbor_candidate, graph, n);
+						for (int i = 0; i < N; i++) neighbor_candidate[i] = tmp_sol[i];
+						cmp = fitness(neighbor_candidate);
 						city1 = i;
 						city2 = j;
 					}
@@ -179,17 +181,20 @@ void test(int **graph, int n) {
 				else {
 
 					// Kiểm tra xem nó có đang hơn best không
-					if(fitness(tmp_sol, graph, n) < best_val
-						&& fitness(tmp_sol, graph, n) < cmp) {
+					if(fitness(tmp_sol) < best_val
+						&& fitness(tmp_sol) < cmp) {
 
 						// Cập nhật giá trị
-						for (int i = 0; i < n; i++) neighbor_candidate[i] = tmp_sol[i];
-						cmp = fitness(neighbor_candidate, graph, n);
+						for (int i = 0; i < N; i++) neighbor_candidate[i] = tmp_sol[i];
+						cmp = fitness(neighbor_candidate);
 						city1 = i;
 						city2 = j;
 					}
 
-					else{ delete[] tmp_sol; continue;}
+					else { 
+						delete[] tmp_sol; 
+						continue;
+					}
 				}
 
 				// Sau khi xét xong thì ứng cử tốt nhất sẽ là neighbor_candidate, các city sẽ đổi là city1 và city2
@@ -198,24 +203,24 @@ void test(int **graph, int n) {
 		}
 
 		// Cập nhật giá trị
-		for (int i = 0; i < n; i++) best_candidate[i] = neighbor_candidate[i];
-		if(fitness(best_candidate, graph, n) < best_val) {
+		for (int i = 0; i < N; i++) best_candidate[i] = neighbor_candidate[i];
+		if(fitness(best_candidate) < best_val) {
 
-			for (int i = 0; i < n; i++) best_sol[i] = best_candidate[i];
-			best_val = fitness(best_sol, graph, n);
+			for (int i = 0; i < N; i++) best_sol[i] = best_candidate[i];
+			best_val = fitness(best_sol);
 			best_keepping = -1;
 		}
 
 		// Cập nhật tabu list
 		if(tabu_list[city1] == 0 && tabu_list[city2] == 0) {
-			for(int i = 0; i < n; i++) {
+			for(int i = 0; i < N; i++) {
 				if(tabu_list[i] > 0) tabu_list[i]--;
 			}
 			tabu_list[city1] += t;
 		}
 
 		else {
-			for(int i = 0; i < n; i++) {
+			for(int i = 0; i < N; i++) {
 				tabu_list[i] = 0;
 			}
 			tabu_list[city1] += t;
@@ -226,13 +231,13 @@ void test(int **graph, int n) {
 		// 	cout << best_sol[i] << " ";
 		// }
 		// cout << endl;
-		
+
 		//Kiểm tra stop_condition
 		best_keepping++;
 		if(best_keepping == stopping_turn) {
 			stop = true;
 			cout << best_val << endl;
-			for (int i = 0; i < n; i++)
+			for (int i = 0; i < N; i++)
 				cout << best_sol[i] << " ";
 		}
 		// getch();
@@ -244,7 +249,7 @@ void test(int **graph, int n) {
 
 int main() {
 	readFile();
-	test(graph, 7);
+	tabuSearch();
 	delete[] sol;
 	for (int i = 0; i < MAX; i++)
 		delete[] graph[i];
