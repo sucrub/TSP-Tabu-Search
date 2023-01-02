@@ -5,10 +5,13 @@
 */
 
 #include <bits/stdc++.h>
+#include <fstream>
 #include <conio.h>
 using namespace std;
 
 #define MAX 1000
+
+int n;
 
 // Ma trận khoảng cách giữa các thành phố
 int **graph;
@@ -20,23 +23,41 @@ int *sol = new int[MAX];
 	Khởi tạo mảng hai chiều random
 	Mảng chứa khoảng cách di chuyển từ thành phố i đến j
 */
-void make_graph() {
+// void make_graph() {
 
-	// Khởi tạo mảng động hai chiều
-	graph = new int *[MAX];
-	int *temp = new int[MAX * MAX];
-	for (int i = 0; i < MAX; i++) {
-		graph[i] = temp;
-		temp += MAX;
+// 	// Khởi tạo mảng động hai chiều
+// 	graph = new int *[MAX];
+// 	int *temp = new int[MAX * MAX];
+// 	for (int i = 0; i < MAX; i++) {
+// 		graph[i] = temp;
+// 		temp += MAX;
+// 	}
+
+// 	// n là số thành phố
+// 	int n = 7;
+
+// 	// Nhập số
+// 	for (int i = 0; i < n; i++)
+// 		for (int j = 0; j < n; j++)
+// 			cin >> graph[i][j];
+// }
+
+void readFile() {
+
+	ifstream f;
+	f.open("test.txt");
+	f >> n;
+
+	graph = new int *[n];
+	for(int i = 0; i < n; i++) {
+		graph[i] = new int [n];
 	}
 
-	// n là số thành phố
-	int n = 7;
-
-	// Nhập số
-	for (int i = 0; i < n; i++)
-		for (int j = 0; j < n; j++)
-			cin >> graph[i][j];
+	for(int i = 0; i < n; i++) {
+		for(int j = 0; j < n; j++) {
+			f >> graph[i][j];
+		}
+	}
 }
 
 /*
@@ -106,11 +127,14 @@ void test(int **graph, int n) {
 	}
 	cout << endl << "/////////////////" << endl;
 
-	int *best_sol = sol; // Solution tốt nhất
+	int *best_sol = new int [MAX]; // Solution tốt nhất
+	for (int i = 0; i < n; i++) best_sol[i] = sol[i];
 
-	int *best_candidate = sol; // Trường hợp tốt nhất từ vòng lặp trước
+	int *best_candidate = new int [MAX]; // Trường hợp tốt nhất từ vòng lặp trước
+	for (int i = 0; i < n; i++) best_candidate[i] = sol[i];
 
-	int *neighbor_candidate = sol; // Miền láng giềng tốt nhất đang xét 
+	int *neighbor_candidate = new int [MAX]; // Miền láng giềng tốt nhất đang xét 
+	for (int i = 0; i < n; i++) neighbor_candidate[i] = sol[i];
 
 	bool stop = false; // Điều kiện dừng
 
@@ -130,7 +154,7 @@ void test(int **graph, int n) {
 
 				if(i == j) continue;
 
-				int tmp_sol[n]; // Solution hiện tại đang xét đến 
+				int* tmp_sol = new int [MAX]; // Solution hiện tại đang xét đến 
 				for(int i = 0; i < n; i++) {
 					tmp_sol[i] = best_candidate[i];
 				}
@@ -144,7 +168,7 @@ void test(int **graph, int n) {
 					if(fitness(tmp_sol, graph, n) < cmp) {
 
 						// Cập nhật giá trị 
-						neighbor_candidate = tmp_sol;
+						for (int i = 0; i < n; i++) neighbor_candidate[i] = tmp_sol[i];
 						cmp = fitness(neighbor_candidate, graph, n);
 						city1 = i;
 						city2 = j;
@@ -159,25 +183,25 @@ void test(int **graph, int n) {
 						&& fitness(tmp_sol, graph, n) < cmp) {
 
 						// Cập nhật giá trị
-						neighbor_candidate = tmp_sol;
+						for (int i = 0; i < n; i++) neighbor_candidate[i] = tmp_sol[i];
 						cmp = fitness(neighbor_candidate, graph, n);
 						city1 = i;
 						city2 = j;
 					}
 
-					else continue;
+					else{ delete[] tmp_sol; continue;}
 				}
 
 				// Sau khi xét xong thì ứng cử tốt nhất sẽ là neighbor_candidate, các city sẽ đổi là city1 và city2
-
+			delete [] tmp_sol;
 			}
 		}
 
 		// Cập nhật giá trị
-		best_candidate = neighbor_candidate;
+		for (int i = 0; i < n; i++) best_candidate[i] = neighbor_candidate[i];
 		if(fitness(best_candidate, graph, n) < best_val) {
 
-			best_sol = best_candidate;
+			for (int i = 0; i < n; i++) best_sol[i] = best_candidate[i];
 			best_val = fitness(best_sol, graph, n);
 			best_keepping = -1;
 		}
@@ -197,11 +221,12 @@ void test(int **graph, int n) {
 			tabu_list[city1] += t;
 		}
 		
-		cout << best_val << endl;
-		for(int i = 0; i < n; i++) {
-			cout << sol[i] << " ";
-		}
-		cout << endl;
+		// cout << best_val << endl;
+		// for(int i = 0; i < n; i++) {
+		// 	cout << best_sol[i] << " ";
+		// }
+		// cout << endl;
+		
 		//Kiểm tra stop_condition
 		best_keepping++;
 		if(best_keepping == stopping_turn) {
@@ -212,10 +237,13 @@ void test(int **graph, int n) {
 		}
 		// getch();
 	}
+	delete [] best_sol;
+	delete [] best_candidate;
+	delete [] neighbor_candidate;
 }
 
 int main() {
-	make_graph();
+	readFile();
 	test(graph, 7);
 	delete[] sol;
 	for (int i = 0; i < MAX; i++)
