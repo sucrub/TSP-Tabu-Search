@@ -2,10 +2,12 @@
 using namespace std;
 
 int main() {
-    int *array;
-    int test[5] = {1, 2, 3, 4, 5};
-    array = test;
+    int arr[5] = {1, 2, 3, 4, 5};
+    int *tmp;
+    tmp = arr;
     for(int i = 0; i < 5; i++) {
-        cout << array[i] << " ";
+        cout << tmp[i] << " ";
     }
+    cout << endl;
+    
 }
