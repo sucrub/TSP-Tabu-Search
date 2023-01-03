@@ -14,7 +14,7 @@ int main() {
         graph[i] = new int [N];
     }
     ofstream f;
-    f.open("test2.txt");
+    f.open("test.txt");
     f << N << endl;
     for(int i = 0; i < N; i++) {
         for(int j = 0; j < N; j++) {

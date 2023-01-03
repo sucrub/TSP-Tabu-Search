@@ -1,54 +1,28 @@
-/*
-	Cho số thành phố ra ngoài
-	Khởi tạo mảng động mặc định ngay từ đầu
-	Đọc file data
-	Mặc định xe xuất phát từ 0
-	Chỉnh sửa sang đọc tọa độ, tính tọa độ
-*/
-
 #include <bits/stdc++.h>
 #include <fstream>
 #include <conio.h>
 using namespace std;
 
+// The travelling man start from city 0
+
 #define MAX 1000
 
-// Số thành phố
+// Number of city
 int N;
 
-// Ma trận khoảng cách giữa các thành phố
+// Distance matrix between each city
 int **graph;
 
-// Mảng lời giải là thứ tự di chuyển các thành phố
+// Route solution is an array
 int *sol = new int[MAX];
 
 /*
-	Khởi tạo mảng hai chiều random
-	Mảng chứa khoảng cách di chuyển từ thành phố i đến j
+	Read problem from file
 */
-// void make_graph() {
-
-// 	// Khởi tạo mảng động hai chiều
-// 	graph = new int *[MAX];
-// 	int *temp = new int[MAX * MAX];
-// 	for (int i = 0; i < MAX; i++) {
-// 		graph[i] = temp;
-// 		temp += MAX;
-// 	}
-
-// 	// n là số thành phố
-// 	int n = 7;
-
-// 	// Nhập số
-// 	for (int i = 0; i < n; i++)
-// 		for (int j = 0; j < n; j++)
-// 			cin >> graph[i][j];
-// }
-
 void readFile() {
 
 	ifstream f;
-	f.open("test2.txt");
+	f.open("test.txt");
 	f >> N;
 
 	graph = new int *[N];
@@ -65,41 +39,35 @@ void readFile() {
 }
 
 /*
-	Hàm tính giá trị quãng đường đi theo thứ tự thành phố trong sol
-	Tham số chiếu vào:
-		sol: Thứ tự quãng đường đi
-		graph: Ma trận khoảng cách giữa các thành phố
-		n: Số thành phố
+	Caculated the length of the solution's route
 */
 int fitness(int *sol) {
 
-	int path = 0; // độ dài quãng đường
+	int path = 0; // Path's length
 
 	for (int i = 0; i < N - 1; i++) {
 		path = path + graph[sol[i]][sol[i + 1]];
 	}
 
-	path += graph[sol[N - 1]][0]; // quay lại thành phố đầu
+	path += graph[sol[N - 1]][0]; // Back to the first city
 	return path;
 }
 
 /*
-	Hàm khởi tạo kết quả đầu tiên
-	Tham số chiếu vào:
-		graph: Ma trận khoảng cách giữa các thành phố
-		n: Số thành phố
+	Create a first solution randomly
 */
 int *first_sol() {
 
 	srand(time(NULL));
 	int r;
-	// Kiểm tra thành phố đã đi qua chưa
+
+	// To check if we have pass that city
 	map<int, bool> vis;
 
 	int *tmp = new int[MAX];
 	tmp[0] = 0;
 
-	// Random thành phố (?)
+	// Random route
 	for (int i = 1; i < N; i++) {
 		do {
 			r = 1 + rand() % ((N - 1) + 1 - 1);
@@ -111,42 +79,33 @@ int *first_sol() {
 }
 
 /*
-	Hàm Tabu Search
-	Tham số chiếu vào:
-		graph: Ma trận khoảng cách giữa các thành phố
-		n: Số thành phố
+	Tabu Search
 */
 void tabuSearch() {
 
 	int tabu_list[N]; // Tabu list
 	memset(tabu_list, N, 0);
 
-	sol = first_sol(); // Khởi tạo solution đầu tiên
+	sol = first_sol(); // Make a first solution
 
-	int best_val = fitness(sol); // Value cho solution tốt nhất
-	// cout << "////////GIA TRI KHOI TAO/////////" << endl;
-	// cout << best_val << endl;
-	// for(int i = 0; i < N; i++) {
-	// 	cout << sol[i] << " ";
-	// }
-	// cout << endl << "/////////////////" << endl;
+	int best_val = fitness(sol); // Best value for this problem that tabu search can find 
 
-	int *best_sol = new int [MAX]; // Solution tốt nhất
+	int *best_sol = new int [MAX]; // Best solution for this problem that tabu search can find
 	for (int i = 0; i < N; i++) best_sol[i] = sol[i];
 
-	int *best_candidate = new int [MAX]; // Trường hợp tốt nhất từ vòng lặp trước
+	int *best_candidate = new int [MAX]; // Best solution from last loop
 	for (int i = 0; i < N; i++) best_candidate[i] = sol[i];
 
-	int *neighbor_candidate = new int [MAX]; // Miền láng giềng tốt nhất đang xét 
+	int *neighbor_candidate = new int [MAX]; // Best solution for current neighbor 
 	for (int i = 0; i < N; i++) neighbor_candidate[i] = sol[i];
 
-	bool stop = false; // Điều kiện dừng
+	bool stop = false; // stop condition
 
 	int t = (int)sqrt(N); // Tabu tenure
 
-	int best_keepping = 0; // Số lần không thay đổi best solution
+	int best_keepping = 0; // Time that the best value unchange
 
-	int stopping_turn = 1000; // Nếu best_keeping == stopping_turn thì stop = true
+	int stopping_turn = 1000; // If best_keeping == stopping_turn then stop = true
 
 	while(!stop) {
 
@@ -158,20 +117,21 @@ void tabuSearch() {
 
 				if(i == j) continue;
 
-				int* tmp_sol = new int [MAX]; // Solution hiện tại đang xét đến 
+				int* tmp_sol = new int [MAX]; // Current solution 
 				for(int i = 0; i < N; i++) {
-					tmp_sol[i] = best_candidate[i];
+					tmp_sol[i] = best_candidate[i]; // Equal to the last loop's solution for base
 				}
 
-				swap(tmp_sol[i], tmp_sol[j]); // Đảo vị trí hai thành phố 
+				swap(tmp_sol[i], tmp_sol[j]); // Swap two city to make a new route 
 
-				// Kiểm tra có tabu không
+				// Check the route if its tabu
+				// Doesn't tabu
 				if(tabu_list[i] == 0 && tabu_list[j] == 0) {
 					
-					// Nếu không tabu thì xét xem đây có phải phương án tốt nhất trong láng giềng
+					// If this solution is currently the best one so far in this neighbor
 					if(fitness(tmp_sol) < cmp) {
 
-						// Cập nhật giá trị 
+						// Update the value 
 						for (int i = 0; i < N; i++) neighbor_candidate[i] = tmp_sol[i];
 						cmp = fitness(neighbor_candidate);
 						city1 = i;
@@ -179,78 +139,74 @@ void tabuSearch() {
 					}
 				}
 
-				// Nếu có tabu
+				// Does tabu
 				else {
 
-					// Kiểm tra xem nó có đang hơn best không
+					// Check if this solution is currently better than the best one so far of tabu search
 					if(fitness(tmp_sol) < best_val
 						&& fitness(tmp_sol) < cmp) {
 
-						// Cập nhật giá trị
+						// Update the value
 						for (int i = 0; i < N; i++) neighbor_candidate[i] = tmp_sol[i];
 						cmp = fitness(neighbor_candidate);
 						city1 = i;
 						city2 = j;
 					}
 
+					// Discard it when it doesn't meet the requirement
 					else { 
 						delete[] tmp_sol; 
 						continue;
 					}
 				}
 
-				// Sau khi xét xong thì ứng cử tốt nhất sẽ là neighbor_candidate, các city sẽ đổi là city1 và city2
 			delete [] tmp_sol;
 			}
 		}
 
-		// Cập nhật giá trị
-		for (int i = 0; i < N; i++) best_candidate[i] = neighbor_candidate[i];
-		if(fitness(best_candidate) < best_val) {
+		//After checking out all the neighbor, best one stay in neighbor_candidate, city1 and city2 is the two cities that swap
+
+		// Update the value
+		for (int i = 0; i < N; i++) 
+			best_candidate[i] = neighbor_candidate[i]; // Update the best value from the last loop
+
+		if(fitness(best_candidate) < best_val) { // If this solution is better than what we have so far
 
 			for (int i = 0; i < N; i++) best_sol[i] = best_candidate[i];
 			best_val = fitness(best_sol);
 			best_keepping = -1;
 		}
 
-		// Cập nhật tabu list
-		if(tabu_list[city1] == 0 && tabu_list[city2] == 0) {
+		// Update the tabu list
+
+		if(tabu_list[city1] == 0 && tabu_list[city2] == 0) { // If the solution is not tabu
 			for(int i = 0; i < N; i++) {
 				if(tabu_list[i] > 0) tabu_list[i]--;
 			}
 			tabu_list[city1] += t;
 		}
 
-		else {
+		else { // If the solution is tabu
 			for(int i = 0; i < N; i++) {
 				tabu_list[i] = 0;
 			}
 			tabu_list[city1] += t;
 		}
-		
-		// cout << best_val << endl;
-		// for(int i = 0; i < n; i++) {
-		// 	cout << best_sol[i] << " ";
-		// }
-		// cout << endl;
 
-		//Kiểm tra stop_condition
+		// Checking the stop_condition
 		best_keepping++;
 		if(best_keepping == stopping_turn) {
 			stop = true;
-			// cout << "Best value: " << best_val << endl;
-			// cout << "Route: ";
-			// for (int i = 0; i < N; i++)
-			// 	cout << best_sol[i] << " ";
 		}
-		// getch();
 	}
 
+	// Print the result
 	cout << "Best value: " << best_val << endl;
 	cout << "Route: ";
 	for (int i = 0; i < N; i++)
 		cout << best_sol[i] << " ";
 	cout << endl;
+
 	delete [] best_sol;
 	delete [] best_candidate;
 	delete [] neighbor_candidate;
@@ -259,6 +215,8 @@ void tabuSearch() {
 int main() {
 	readFile();
 	tabuSearch();
+
+	// Comment this so it won't delay when testing
 	// delete[] sol;
 	// for (int i = 0; i < MAX; i++)
 	// 	delete[] graph[i];
