@@ -3,6 +3,7 @@
 	Khởi tạo mảng động mặc định ngay từ đầu
 	Đọc file data
 	Mặc định xe xuất phát từ 0
+	Chỉnh sửa sang đọc tọa độ, tính tọa độ
 */
 
 #include <bits/stdc++.h>
@@ -47,7 +48,7 @@ int *sol = new int[MAX];
 void readFile() {
 
 	ifstream f;
-	f.open("test.txt");
+	f.open("test2.txt");
 	f >> N;
 
 	graph = new int *[N];
@@ -60,6 +61,7 @@ void readFile() {
 			f >> graph[i][j];
 		}
 	}
+	f.close();
 }
 
 /*
@@ -89,7 +91,7 @@ int fitness(int *sol) {
 */
 int *first_sol() {
 
-	srand((int)time(0));
+	srand(time(NULL));
 	int r;
 	// Kiểm tra thành phố đã đi qua chưa
 	map<int, bool> vis;
@@ -122,12 +124,12 @@ void tabuSearch() {
 	sol = first_sol(); // Khởi tạo solution đầu tiên
 
 	int best_val = fitness(sol); // Value cho solution tốt nhất
-	cout << "////////GIA TRI KHOI TAO/////////" << endl;
-	cout << best_val << endl;
-	for(int i = 0; i < N; i++) {
-		cout << sol[i] << " ";
-	}
-	cout << endl << "/////////////////" << endl;
+	// cout << "////////GIA TRI KHOI TAO/////////" << endl;
+	// cout << best_val << endl;
+	// for(int i = 0; i < N; i++) {
+	// 	cout << sol[i] << " ";
+	// }
+	// cout << endl << "/////////////////" << endl;
 
 	int *best_sol = new int [MAX]; // Solution tốt nhất
 	for (int i = 0; i < N; i++) best_sol[i] = sol[i];
@@ -144,7 +146,7 @@ void tabuSearch() {
 
 	int best_keepping = 0; // Số lần không thay đổi best solution
 
-	int stopping_turn = 500; // Nếu best_keeping == stopping_turn thì stop = true
+	int stopping_turn = 1000; // Nếu best_keeping == stopping_turn thì stop = true
 
 	while(!stop) {
 
@@ -236,12 +238,19 @@ void tabuSearch() {
 		best_keepping++;
 		if(best_keepping == stopping_turn) {
 			stop = true;
-			cout << best_val << endl;
-			for (int i = 0; i < N; i++)
-				cout << best_sol[i] << " ";
+			// cout << "Best value: " << best_val << endl;
+			// cout << "Route: ";
+			// for (int i = 0; i < N; i++)
+			// 	cout << best_sol[i] << " ";
 		}
 		// getch();
 	}
+
+	cout << "Best value: " << best_val << endl;
+	cout << "Route: ";
+	for (int i = 0; i < N; i++)
+		cout << best_sol[i] << " ";
+	cout << endl;
 	delete [] best_sol;
 	delete [] best_candidate;
 	delete [] neighbor_candidate;
@@ -250,8 +259,8 @@ void tabuSearch() {
 int main() {
 	readFile();
 	tabuSearch();
-	delete[] sol;
-	for (int i = 0; i < MAX; i++)
-		delete[] graph[i];
-	delete[] graph;
+	// delete[] sol;
+	// for (int i = 0; i < MAX; i++)
+	// 	delete[] graph[i];
+	// delete[] graph;
 }
